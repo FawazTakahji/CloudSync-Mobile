@@ -194,7 +194,6 @@ export function LocalSaves(props: Props) {
     }
 
     function List() {
-        const singletons = React.useContext(SingletonsContext);
         if (filteredSaves) {
             return (
                 <SavesList data={filteredSaves}
@@ -203,13 +202,7 @@ export function LocalSaves(props: Props) {
                                <Item save={item.item}
                                      searchText={props.searchText}
                                      highlightColor={props.searchTextHighlightColor} />}
-                           onRefresh={async () => {
-                               if (singletons.isUploadingSaves) {
-                                   return;
-                               }
-
-                               await refresh();
-                           }}
+                           onRefresh={refresh}
                            refreshing={isLoading} />
             );
         } else {
@@ -217,13 +210,7 @@ export function LocalSaves(props: Props) {
                 <SavesList data={props.saves!}
                            listEmptyText={"No saves found"}
                            renderItem={item => <Item save={item.item} />}
-                           onRefresh={async () => {
-                               if (singletons.isUploadingSaves) {
-                                   return;
-                               }
-
-                               await refresh();
-                           }}
+                           onRefresh={refresh}
                            refreshing={isLoading} />
             );
         }
