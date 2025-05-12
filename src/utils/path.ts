@@ -9,7 +9,9 @@ const replace: [RegExp, string][] = [
 ]
 
 export function pathEqual(a: string, b: string): boolean {
-    return a === b || normalizePath(a) === normalizePath(b);
+    const lowerA = a.toLowerCase();
+    const lowerB = b.toLowerCase();
+    return lowerA === lowerB || normalizePath(lowerA) === normalizePath(lowerB);
 }
 
 export function normalizePath(path: string): string {
