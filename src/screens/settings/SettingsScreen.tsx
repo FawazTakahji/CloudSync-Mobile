@@ -22,6 +22,7 @@ import { SingletonsContext } from "@/providers/SingletonsProvider";
 import { BackupsModal } from "@/screens/settings/modals/BackupsModal";
 import { inAppUpdates } from "@/utils/updates";
 import { UpdatesModal } from "@/screens/settings/modals/UpdatesModal";
+import { SavesPathModal } from "@/screens/settings/modals/SavesPathModal";
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -29,12 +30,14 @@ export default function SettingsScreen() {
     const { isTransferringSaves } = React.useContext(SingletonsContext);
     const [isThemeModalVisible, setIsThemeModalVisible] = React.useState<boolean>(false);
     const [isStorageModeModalVisible, setIsStorageModeModalVisible] = React.useState<boolean>(false);
+    const [isSavesPathModalVisible, setIsSavesPathModalVisible] = React.useState<boolean>(false);
     const [isCloudProviderModalVisible, setIsCloudProviderModalVisible] = React.useState<boolean>(false);
     const [isBackupsModalVisible, setIsBackupsModalVisible] = React.useState<boolean>(false);
     const [isUpdatesModalVisible, setIsUpdatesModalVisible] = React.useState<boolean>(false);
 
     const [isThemeErrorVisible, setIsThemeErrorVisible] = React.useState<boolean>(false);
     const [isStorageModeErrorVisible, setIsStorageModeErrorVisible] = React.useState<boolean>(false);
+    const [isSavesPathErrorVisible, setIsSavesPathErrorVisible] = React.useState<boolean>(false);
     const [isCloudProviderErrorVisible, setIsCloudProviderErrorVisible] = React.useState<boolean>(false);
     const [isBackupSavesErrorVisible, setIsBackupSavesErrorVisible] = React.useState<boolean>(false);
     const [isPurgeBackupsErrorVisible, setIsPurgeBackupsErrorVisible] = React.useState<boolean>(false);
@@ -67,6 +70,15 @@ export default function SettingsScreen() {
                            </Text>}
                        disabled={isTransferringSaves}
                        onPress={() => setIsStorageModeModalVisible(true)} />
+            <Divider />
+
+            <List.Item title={"Saves Path"}
+                       description={props =>
+                           <Text {...props}>{settings.savesPath ?? "Default"}</Text>}
+                       left={props =>
+                           <List.Icon {...props} icon="folder" />}
+                       disabled={isTransferringSaves}
+                       onPress={() => setIsSavesPathModalVisible(true)} />
             <Divider />
 
             <List.Item title={"Cloud Provider"}
@@ -109,6 +121,9 @@ export default function SettingsScreen() {
                                   setVisible={setIsStorageModeModalVisible}
                                   selectedStorageMode={settings.storageMode}
                                   setSelectedStorageMode={setStorageMode} />
+                {isSavesPathModalVisible && <SavesPathModal setVisible={setIsSavesPathModalVisible}
+                                                            savePath={settings.savesPath}
+                                                            setSavePath={setSavesPath} />}
                 <CloudProviderModal visible={isCloudProviderModalVisible}
                                     setVisible={setIsCloudProviderModalVisible}
                                     selectedCloudProvider={settings.cloudProvider}
@@ -138,6 +153,11 @@ export default function SettingsScreen() {
                              visible={isStorageModeErrorVisible}
                              hide={() => setIsStorageModeErrorVisible(false)}>
                     An error occurred while saving the storage mode setting, check the logs for more information.
+                </ErrorDialog>
+                <ErrorDialog title={"Saves Path Error"}
+                             visible={isSavesPathErrorVisible}
+                             hide={() => setIsSavesPathErrorVisible(false)}>
+                    An error occurred while saving the saves path setting, check the logs for more information.
                 </ErrorDialog>
                 <ErrorDialog title={"Cloud Provider Error"}
                              visible={isCloudProviderErrorVisible}
@@ -186,6 +206,15 @@ export default function SettingsScreen() {
         } catch (e) {
             log.error("An error occurred while saving the storage mode setting:", e);
             setIsStorageModeErrorVisible(true);
+        }
+    }
+
+    function setSavesPath(savesPath: string | null) {
+        try {
+            settings.setSavesPath(savesPath);
+        } catch (e) {
+            log.error("An error occurred while saving the saves path setting:", e);
+            setIsSavesPathErrorVisible(true);
         }
     }
 
