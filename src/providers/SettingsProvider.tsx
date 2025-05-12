@@ -71,8 +71,8 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
         try {
             const primary = AndroidUtils.getPrimaryStoragePath()
             const android = normalizePath(Paths.join(primary, "Android"));
-            const startsWitnAndroid = startsWithCaseInsensitive(savesPath, android);
-            const inAndroidFolder = startsWitnAndroid && (savesPath.length === android.length || savesPath[android.length] === '/');
+            const startsWithAndroid = startsWithCaseInsensitive(savesPath, android);
+            const inAndroidFolder = startsWithAndroid && (savesPath.length === android.length || savesPath[android.length] === '/');
             setInAndroidFolderInternal(inAndroidFolder);
         } catch (e) {
             log.error("An error occurred while getting the primary storage path:", e);

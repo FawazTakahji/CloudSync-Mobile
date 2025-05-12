@@ -22,7 +22,9 @@ export function SavesPathModal(props: Props) {
                        setVisible={props.setVisible}>
             <TextInput value={path}
                        onChangeText={setPath}
-                       placeholder={"Default"} />
+                       placeholder={"Default"}
+                       autoCapitalize={"none"}
+                       autoFocus={true} />
 
             <View style={{
                 alignSelf: "stretch",
