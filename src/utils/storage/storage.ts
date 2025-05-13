@@ -3,22 +3,24 @@ import * as legacy from "./legacy";
 import * as saf from "./saf";
 import * as shizuku from "./shizuku";
 import { PathDoesntExistError } from "@/utils/storage/errors";
+import AndroidUtils from "@/modules/android-utils/src/AndroidUtilsModule";
+import { normalizePath } from "@/utils/path";
+import { Paths } from "expo-file-system/next";
+import { startsWithCaseInsensitive } from "@/utils/misc";
 
-export async function isStoragePermissionGranted(storageMode: StorageMode): Promise<boolean> {
-    switch (storageMode) {
-        case StorageMode.Legacy:
-            return await legacy.isStoragePermissionGranted();
-        case StorageMode.Saf:
-            return saf.isStoragePermissionGranted();
-        case StorageMode.Shizuku:
-            return shizuku.isStoragePermissionGranted();
-    }
+function isInAndroid(path: string): boolean {
+    const primary = AndroidUtils.getPrimaryStoragePath()
+    const android = normalizePath(Paths.join(primary, "Android"));
+    const startsWithAndroid = startsWithCaseInsensitive(normalizePath(path), android);
+    return startsWithAndroid && (path.length === android.length || path[android.length] === '/');
 }
 
-export async function requestStoragePermission(storageMode: StorageMode): Promise<boolean> {
+export async function requestStoragePermission(storageMode: StorageMode, inAndroid: boolean): Promise<boolean> {
+    if (!inAndroid || storageMode === StorageMode.Legacy) {
+        return await legacy.requestStoragePermission();
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return await legacy.requestStoragePermission();
         case StorageMode.Saf:
             return await saf.requestStoragePermission();
         case StorageMode.Shizuku:
@@ -27,9 +29,11 @@ export async function requestStoragePermission(storageMode: StorageMode): Promis
 }
 
 export function getSubdirectoryNames(directory: string, storageMode: StorageMode): string[] {
+    if (!isInAndroid(directory) || storageMode === StorageMode.Legacy) {
+        return legacy.getSubdirectoryNames(directory);
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return legacy.getSubdirectoryNames(directory);
         case StorageMode.Saf:
             return saf.getSubdirectoryNames(directory);
         case StorageMode.Shizuku:
@@ -38,9 +42,11 @@ export function getSubdirectoryNames(directory: string, storageMode: StorageMode
 }
 
 export function getSubdirectoryPaths(directory: string, storageMode: StorageMode): string[] {
+    if (!isInAndroid(directory) || storageMode === StorageMode.Legacy) {
+        return legacy.getSubdirectoryPaths(directory);
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return legacy.getSubdirectoryPaths(directory);
         case StorageMode.Saf:
             return saf.getSubdirectoryPaths(directory);
         case StorageMode.Shizuku:
@@ -49,9 +55,11 @@ export function getSubdirectoryPaths(directory: string, storageMode: StorageMode
 }
 
 export function getFilePaths(directory: string, storageMode: StorageMode): string[] {
+    if (!isInAndroid(directory) || storageMode === StorageMode.Legacy) {
+        return legacy.getFilePaths(directory);
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return legacy.getFilePaths(directory);
         case StorageMode.Saf:
             return saf.getFilePaths(directory);
         case StorageMode.Shizuku:
@@ -60,9 +68,11 @@ export function getFilePaths(directory: string, storageMode: StorageMode): strin
 }
 
 export function getFileBytes(path: string, storageMode: StorageMode): Uint8Array {
+    if (!isInAndroid(path) || storageMode === StorageMode.Legacy) {
+        return legacy.getFileBytes(path);
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return legacy.getFileBytes(path);
         case StorageMode.Saf:
             return saf.getFileBytes(path);
         case StorageMode.Shizuku:
@@ -71,9 +81,11 @@ export function getFileBytes(path: string, storageMode: StorageMode): Uint8Array
 }
 
 export function getFileText(path: string, storageMode: StorageMode): string {
+    if (!isInAndroid(path) || storageMode === StorageMode.Legacy) {
+        return legacy.getFileText(path);
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            return legacy.getFileText(path);
         case StorageMode.Saf:
             return saf.getFileText(path);
         case StorageMode.Shizuku:
@@ -82,10 +94,12 @@ export function getFileText(path: string, storageMode: StorageMode): string {
 }
 
 export function writeFile(parent: string, name: string, bytes: Uint8Array, storageMode: StorageMode) {
+    if (!isInAndroid(parent) || storageMode === StorageMode.Legacy) {
+        legacy.writeFile(parent, name, bytes);
+        return;
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            legacy.writeFile(parent, name, bytes);
-            break;
         case StorageMode.Saf:
             saf.writeFile(parent, name, bytes);
             break;
@@ -97,10 +111,12 @@ export function writeFile(parent: string, name: string, bytes: Uint8Array, stora
 
 export function deletePath(path: string, storageMode: StorageMode, safe: boolean = true) {
     try {
+        if (!isInAndroid(path) || storageMode === StorageMode.Legacy) {
+            legacy.deletePath(path);
+            return;
+        }
+
         switch (storageMode) {
-            case StorageMode.Legacy:
-                legacy.deletePath(path);
-                break;
             case StorageMode.Saf:
                 saf.deletePath(path);
                 break;
@@ -116,10 +132,12 @@ export function deletePath(path: string, storageMode: StorageMode, safe: boolean
 }
 
 export function move(from: string, to: string, storageMode: StorageMode) {
+    if ((!isInAndroid(from) && !isInAndroid(to)) || storageMode === StorageMode.Legacy) {
+        legacy.move(from, to);
+        return;
+    }
+
     switch (storageMode) {
-        case StorageMode.Legacy:
-            legacy.move(from, to);
-            break;
         case StorageMode.Saf:
             saf.move(from, to);
             break;

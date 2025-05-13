@@ -11,8 +11,7 @@ interface Context {
     loaded: boolean;
     theme: Theme;
     storageMode: StorageMode;
-    savesPath: string | null;
-    inAndroidFolder: boolean;
+    savesPath: { path: string | null, inAndroidFolder: boolean };
     cloudProvider: CloudProvider;
     backupSaves: boolean;
     purgeBackups: boolean;
@@ -32,8 +31,7 @@ export const SettingsContext = React.createContext<Context>({
     loaded: false,
     theme: Theme.Auto,
     storageMode: getBestStorageMode(),
-    savesPath: null,
-    inAndroidFolder: true,
+    savesPath: { path: null, inAndroidFolder: true },
     cloudProvider: CloudProvider.Dropbox,
     backupSaves: true,
     purgeBackups: true,
@@ -53,8 +51,10 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
     const [loaded, setLoaded] = React.useState<boolean>(false);
     const [theme, setThemeInternal] = React.useState<Theme>(Theme.Auto);
     const [storageMode, setStorageModeInternal] = React.useState<StorageMode>(getBestStorageMode());
-    const [savesPath, setSavesPathInternal] = React.useState<string | null>(null);
-    const [inAndroidFolder, setInAndroidFolderInternal] = React.useState<boolean>(false);
+    const [saves, setSavesInternal] = React.useState<{ path: string | null, inAndroidFolder: boolean }>({
+        path: null,
+        inAndroidFolder: true
+    });
     const [cloudProvider, setCloudProviderInternal] = React.useState<CloudProvider>(CloudProvider.Dropbox);
     const [backupSaves, setBackupSavesInternal] = React.useState<boolean>(true);
     const [purgeBackups, setPurgeBackupsInternal] = React.useState<boolean>(true);
@@ -62,31 +62,13 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
     const [checkUpdates, setCheckUpdatesInternal] = React.useState<boolean>(true);
 
     React.useEffect(loadSettings, []);
-    React.useEffect(() => {
-        if (savesPath === null) {
-            setInAndroidFolderInternal(true);
-            return;
-        }
-
-        try {
-            const primary = AndroidUtils.getPrimaryStoragePath()
-            const android = normalizePath(Paths.join(primary, "Android"));
-            const startsWithAndroid = startsWithCaseInsensitive(savesPath, android);
-            const inAndroidFolder = startsWithAndroid && (savesPath.length === android.length || savesPath[android.length] === '/');
-            setInAndroidFolderInternal(inAndroidFolder);
-        } catch (e) {
-            log.error("An error occurred while getting the primary storage path:", e);
-            setInAndroidFolderInternal(false);
-        }
-    }, [savesPath]);
 
     return (
         <SettingsContext.Provider value={{
             loaded: loaded,
             theme: theme,
             storageMode: storageMode,
-            savesPath: savesPath,
-            inAndroidFolder: inAndroidFolder,
+            savesPath: saves,
             cloudProvider: cloudProvider,
             backupSaves: backupSaves,
             purgeBackups: purgeBackups,
@@ -117,7 +99,30 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
 
     function setSavesPath(savesPath: string | null) {
         SecureStore.setItem(keys.savesPath, savesPath ?? "null");
-        setSavesPathInternal(savesPath);
+
+        if (savesPath === null) {
+            setSavesInternal({
+                path: savesPath,
+                inAndroidFolder: true
+            })
+            return;
+        }
+
+        let inAndroidFolder: boolean;
+        try {
+            const primary = AndroidUtils.getPrimaryStoragePath()
+            const android = normalizePath(Paths.join(primary, "Android"));
+            const startsWithAndroid = startsWithCaseInsensitive(savesPath, android);
+            inAndroidFolder = startsWithAndroid && (savesPath.length === android.length || savesPath[android.length] === '/');
+        } catch (e) {
+            log.error("An error occurred while getting the primary storage path:", e);
+            inAndroidFolder = /[\\/]Android[\\/]data[\\/]/gi.test(savesPath);
+        }
+
+        setSavesInternal({
+            path: savesPath,
+            inAndroidFolder: inAndroidFolder
+        });
     }
 
     function setCloudProvider(cloudProvider: CloudProvider) {
@@ -177,7 +182,7 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
         try {
             const savesPathStr = SecureStore.getItem(keys.savesPath);
             if (savesPathStr !== "null") {
-                setSavesPathInternal(savesPathStr);
+                setSavesPath(savesPathStr);
             }
         } catch (e) {
             log.error("An error occurred while loading the saves path setting:", e);

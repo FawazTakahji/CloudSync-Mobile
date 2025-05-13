@@ -20,12 +20,12 @@ export function getSavesPath(): string {
     return savesPath;
 }
 
-export function getLocalSaves(storageMode: StorageMode): { saves: SaveInfo[], loadFailed: boolean } {
-    const savesPath = getSavesPath();
+export function getLocalSaves(storageMode: StorageMode, savesPath: string | null): { saves: SaveInfo[], loadFailed: boolean } {
+    const path = savesPath || getSavesPath();
     let subDirs: string[];
 
     try {
-        subDirs = storage.getSubdirectoryNames(savesPath, storageMode);
+        subDirs = storage.getSubdirectoryNames(path, storageMode);
     } catch (e) {
         if (e instanceof DirectoryDoesntExistError) {
             return {
@@ -52,7 +52,7 @@ export function getLocalSaves(storageMode: StorageMode): { saves: SaveInfo[], lo
         }
 
         try {
-            const info = getSaveInfo(subDir, storageMode, parser);
+            const info = getSaveInfo(path, subDir, storageMode, parser);
             saves.push(info);
         } catch (e) {
             loadFailed = true;
@@ -66,8 +66,9 @@ export function getLocalSaves(storageMode: StorageMode): { saves: SaveInfo[], lo
     };
 }
 
-export function getSaveInfo(saveName: string, storageMode: StorageMode, xmlParser?: XMLParser): SaveInfo {
-    const infoPath = Paths.join(getSavesPath(), saveName, "SaveGameInfo");
+export function getSaveInfo(savesPath: string | null, saveName: string, storageMode: StorageMode, xmlParser?: XMLParser): SaveInfo {
+    const path = savesPath || getSavesPath();
+    const infoPath = Paths.join(path, saveName, "SaveGameInfo");
     const text = storage.getFileText(infoPath, storageMode);
 
     const parser = xmlParser || new XMLParser({
