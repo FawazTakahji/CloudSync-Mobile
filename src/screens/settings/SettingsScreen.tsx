@@ -74,7 +74,7 @@ export default function SettingsScreen() {
 
             <List.Item title={"Saves Path"}
                        description={props =>
-                           <Text {...props}>{settings.savesPath ?? "Default"}</Text>}
+                           <Text {...props}>{settings.savesPath.path ?? "Default"}</Text>}
                        left={props =>
                            <List.Icon {...props} icon="folder" />}
                        disabled={isTransferringSaves}
@@ -122,7 +122,7 @@ export default function SettingsScreen() {
                                   selectedStorageMode={settings.storageMode}
                                   setSelectedStorageMode={setStorageMode} />
                 {isSavesPathModalVisible && <SavesPathModal setVisible={setIsSavesPathModalVisible}
-                                                            savePath={settings.savesPath}
+                                                            savePath={settings.savesPath.path}
                                                             setSavePath={setSavesPath} />}
                 <CloudProviderModal visible={isCloudProviderModalVisible}
                                     setVisible={setIsCloudProviderModalVisible}

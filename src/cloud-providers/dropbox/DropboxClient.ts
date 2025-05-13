@@ -99,10 +99,10 @@ export class DropboxClient implements ICloudClient {
         }
     }
 
-    async uploadSave(storageMode: StorageMode, saveName: string) {
-        const savesPath = getSavesPath();
+    async uploadSave(storageMode: StorageMode, savesPath: string | null, saveName: string) {
+        const path = savesPath || getSavesPath();
 
-        const info = getSaveInfo(saveName, storageMode);
+        const info = getSaveInfo(path, saveName, storageMode);
         // upload info json file
         await retry(() =>
             this.rateLimit(() =>
@@ -112,7 +112,7 @@ export class DropboxClient implements ICloudClient {
                     mute: true
                 })), this.retryGeneralAttemptOptions);
 
-        const folderPath = Paths.join(savesPath, saveName);
+        const folderPath = Paths.join(path, saveName);
         const targetPath = Paths.join("/Saves", saveName);
         const files = this.getFiles(storageMode, folderPath, targetPath, saveName, true);
 

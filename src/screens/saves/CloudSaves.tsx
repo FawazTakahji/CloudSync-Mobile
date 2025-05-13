@@ -14,6 +14,8 @@ import { SaveItem } from "@/screens/saves/components/SaveItem";
 import { getSavesPath, SaveInfo } from "@/utils/saves";
 import { StorageMode } from "@/enums";
 import * as storage from "@/utils/storage";
+import * as legacy from "@/utils/storage/legacy";
+import * as saf from "@/utils/storage/saf";
 import { Paths } from "expo-file-system/next";
 import Shizuku from "@/modules/shizuku";
 import { useEvents } from "react-native-events-hooks";
@@ -39,7 +41,7 @@ interface ItemProps {
 
 export function CloudSaves(props: Props) {
     const router = useRouter();
-    const { cloudProvider, storageMode } = React.useContext(SettingsContext);
+    const { cloudProvider, storageMode, savesPath } = React.useContext(SettingsContext);
     const { cloudClient } = React.useContext(CloudContext);
 
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -246,11 +248,19 @@ export function CloudSaves(props: Props) {
     }
 
     async function checkStorage(): Promise<boolean> {
-        if (storageMode === StorageMode.Shizuku) {
+        if ((!savesPath.inAndroidFolder || storageMode === StorageMode.Legacy)) {
+            if (!await legacy.isStoragePermissionGranted()) {
+                ToastAndroid.show("Please grant the storage permission", ToastAndroid.SHORT);
+            } else {
+                return true;
+            }
+
+            return await legacy.requestStoragePermission();
+        } else if (storageMode === StorageMode.Shizuku) {
             if (!Shizuku.ping()) {
                 ToastAndroid.show("Please start the Shizuku service", ToastAndroid.SHORT);
                 return false;
-            } else if (!(Shizuku.checkPermission())) {
+            } else if (!Shizuku.checkPermission()) {
                 ToastAndroid.show("Please grant the Shizuku permission", ToastAndroid.SHORT);
                 const result = await Shizuku.requestPermission();
                 if (!result) {
@@ -260,9 +270,11 @@ export function CloudSaves(props: Props) {
             if (!Shizuku.checkStorageService()) {
                 await Shizuku.startStorageService();
             }
-        } else if (!(await storage.isStoragePermissionGranted(storageMode))) {
+
+            return true;
+        } else if (storageMode === StorageMode.Saf && !saf.isStoragePermissionGranted()) {
             ToastAndroid.show("Please grant the storage permission", ToastAndroid.SHORT);
-            return await storage.requestStoragePermission(storageMode);
+            return await saf.requestStoragePermission();
         }
 
         return true;
@@ -295,15 +307,15 @@ export function CloudSaves(props: Props) {
             return;
         }
 
-        let savesPath: string;
+        let path: string;
         try {
-            savesPath = getSavesPath();
+            path = savesPath.path || getSavesPath();
         } catch (e) {
             log.error(`An error occurred while getting saves path to download save \"${info.folderName}\":`, e);
             addFailedDownload(info.folderName);
             return;
         }
-        const tempPath = Paths.join(savesPath, "cstemp");
+        const tempPath = Paths.join(path, "cstemp");
         const tempSavePath = Paths.join(tempPath, info.folderName)
 
         try {
@@ -323,7 +335,7 @@ export function CloudSaves(props: Props) {
                 return;
             }
 
-            const savePath = Paths.join(savesPath, info.folderName);
+            const savePath = Paths.join(path, info.folderName);
             try {
                 storage.deletePath(savePath, storageMode)
             } catch (e) {

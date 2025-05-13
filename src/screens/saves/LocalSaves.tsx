@@ -2,7 +2,9 @@ import React from "react";
 import { Linking, StyleSheet, ToastAndroid, View } from "react-native";
 import { StorageHeader } from "@/screens/saves/StorageHeader";
 import { ActivityIndicator, Button, Portal, Text } from "react-native-paper";
-import { isStoragePermissionGranted, requestStoragePermission } from "@/utils/storage";
+import { requestStoragePermission } from "@/utils/storage";
+import * as legacy from "@/utils/storage/legacy";
+import * as saf from "@/utils/storage/saf";
 import { StorageMode } from "@/enums";
 import Shizuku from "@/modules/shizuku";
 import log from "@/utils/logger";
@@ -36,7 +38,7 @@ interface ItemProps {
 }
 
 export function LocalSaves(props: Props) {
-    const { storageMode, backupSaves } = React.useContext(SettingsContext);
+    const { storageMode, savesPath, backupSaves } = React.useContext(SettingsContext);
     const { cloudClient } = React.useContext(CloudContext);
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const [shizukuInstalled, setShizukuInstalled] = React.useState<boolean>(true);
@@ -58,7 +60,7 @@ export function LocalSaves(props: Props) {
             log.error("An error occurred while loading local saves:", e);
             setIsLoadingSavesErrorDialogVisible(true);
         });
-    }, [storageMode]);
+    }, [storageMode, savesPath]);
 
     React.useEffect(() => {
         const localChangedId = listen(events.localSavesChanged, () => refresh().catch(e => {
@@ -111,14 +113,15 @@ export function LocalSaves(props: Props) {
             ) : !storagePerm ? (
                 <View style={styles.MessageContainer}>
                     <Text variant={"bodyLarge"}>
-                        {storageMode === StorageMode.Shizuku ? "Please grant shizuku permission"
+                        {!savesPath.inAndroidFolder ? "Please grant the storage permission"
+                        : storageMode === StorageMode.Shizuku ? "Please grant shizuku permission"
                         : storageMode === StorageMode.Saf ? "Please grant the app access to Android/data"
                         : "Please grant the storage permission"}
                     </Text>
                     <Button mode={"contained"}
                             onPress={async () => {
                                 try {
-                                    const result = await requestStoragePermission(storageMode);
+                                    const result = await requestStoragePermission(storageMode, savesPath.inAndroidFolder);
                                     if (result) {
                                         await refresh();
                                     }
@@ -243,14 +246,20 @@ export function LocalSaves(props: Props) {
         props.setSaves(null);
 
         let shouldLoadSaves: boolean = false;
-        if (storageMode === StorageMode.Shizuku) {
+        if (!savesPath.inAndroidFolder || storageMode === StorageMode.Legacy) {
+            const storagePerm = await legacy.isStoragePermissionGranted();
+            shouldLoadSaves = storagePerm;
+            setStoragePerm(storagePerm);
+        } else if (storageMode === StorageMode.Shizuku) {
             try {
                 if (!Shizuku.isInstalled()) {
                     setShizukuInstalled(false);
+                    setStoragePerm(false);
                 } else if (!Shizuku.ping()) {
                     setShizukuAvailable(false);
+                    setStoragePerm(false);
                 } else {
-                    const storagePerm = await isStoragePermissionGranted(storageMode);
+                    const storagePerm = Shizuku.checkPermission();
                     shouldLoadSaves = storagePerm;
                     setStoragePerm(storagePerm);
                 }
@@ -258,19 +267,19 @@ export function LocalSaves(props: Props) {
                 log.error("An error occurred while checking Shizuku status.", e);
                 setIsShizukuStatusErrorDialogVisible(true);
             }
-        } else {
-            const storagePerm = await isStoragePermissionGranted(storageMode);
+        } else if (storageMode === StorageMode.Saf) {
+            const storagePerm = saf.isStoragePermissionGranted();
             shouldLoadSaves = storagePerm;
             setStoragePerm(storagePerm);
         }
 
         if (shouldLoadSaves) {
-            if (storageMode === StorageMode.Shizuku && !Shizuku.checkStorageService()) {
+            if (savesPath.inAndroidFolder && storageMode === StorageMode.Shizuku && !Shizuku.checkStorageService()) {
                 await Shizuku.startStorageService();
             }
 
             try {
-                const saves = getLocalSaves(storageMode);
+                const saves = getLocalSaves(storageMode, savesPath.path);
                 props.setSaves(saves.saves);
 
                 if (saves.loadFailed) {
@@ -320,7 +329,7 @@ export function LocalSaves(props: Props) {
         }
 
         try {
-            await cloudClient.uploadSave(storageMode, info.folderName);
+            await cloudClient.uploadSave(storageMode, savesPath.path, info.folderName);
         } catch (e) {
             log.error(`An error occurred while uploading save \"${info.folderName}\":`, e);
             addFailedUpload(info.folderName);
