@@ -1,15 +1,24 @@
 import * as Permissions from "react-native-permissions";
 import { File, Directory, Paths } from "expo-file-system/next";
 import { DirectoryDoesntExistError, FileDoesntExistError, PathDoesntExistError } from "@/utils/storage/errors";
+import AndroidUtils from "@/modules/android-utils/src/AndroidUtilsModule";
 
 export async function isStoragePermissionGranted(): Promise<boolean> {
-    const result = await Permissions.check("android.permission.WRITE_EXTERNAL_STORAGE");
-    return result === "granted";
+    if (AndroidUtils.sdkVersion <= 29) {
+        const result = await Permissions.check("android.permission.WRITE_EXTERNAL_STORAGE");
+        return result === "granted";
+    }
+
+    return AndroidUtils.isExternalStorageManager();
 }
 
 export async function requestStoragePermission(): Promise<boolean> {
-    const result = await Permissions.request("android.permission.WRITE_EXTERNAL_STORAGE");
-    return result === "granted";
+    if (AndroidUtils.sdkVersion <= 29) {
+        const result = await Permissions.request("android.permission.WRITE_EXTERNAL_STORAGE");
+        return result === "granted";
+    }
+
+    return await AndroidUtils.requestManageExternalStoragePermission();
 }
 
 export function getSubdirectoryNames(path: string): string[] {
