@@ -15,7 +15,7 @@ CloudSync Mobile is an Android app that allows you to sync your Stardew Valley s
 
 ## FAQ
 ### Which storage mode should I use?
-You should always use the legacy mode if its available, its the fastest and most reliable, if you're unable to use it, shizuku mode is the second fastest, if you don't wan't to mess with shizuku, you should use SAF mode but it's the slowest and can't be used on Android 13 and above
+You should always use the legacy mode if its available, its the fastest and most reliable, if you're unable to use it, shizuku mode is the second fastest, if you don't wan't to mess with shizuku, you should use SAF mode but it's the slowest and can't be used on Android 13 and above, if the selected saves path isn't a child of the Android folder the app will always use legacy mode.
 
 ## Todo
 - Add support for other cloud storage services
