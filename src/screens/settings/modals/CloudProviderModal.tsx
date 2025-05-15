@@ -24,6 +24,9 @@ export function CloudProviderModal(props: Props) {
             <CloudProvidersSelectorButton provider={CloudProvider.Dropbox}
                                           text={"Dropbox"}
                                           icon={"dropbox"} />
+            <CloudProvidersSelectorButton provider={CloudProvider.GoogleDrive}
+                                          text={"Google Drive"}
+                                          icon={"google-drive"} />
         </SettingsModal>
     );
 

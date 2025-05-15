@@ -1,3 +1,4 @@
 export enum CloudProvider {
-    Dropbox = "Dropbox"
+    Dropbox = "Dropbox",
+    GoogleDrive = "GoogleDrive"
 }

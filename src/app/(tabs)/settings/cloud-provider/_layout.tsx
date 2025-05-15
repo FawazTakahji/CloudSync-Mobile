@@ -12,6 +12,11 @@ export default function RootLayout() {
                               title: "Dropbox",
                               header: (props) => <Header title={"Dropbox"} pop={() => props.navigation.pop()} />
                           }} />
+            <Stack.Screen name={"google-drive"}
+                          options={{
+                              title: "Google Drive",
+                              header: (props) => <Header title={"Google Drive"} pop={() => props.navigation.pop()} />
+                          }} />
         </Stack>
     );
 

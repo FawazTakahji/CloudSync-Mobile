@@ -5,7 +5,11 @@
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": ["svcloudsync", "auth.svcloudsync"],
+    "scheme": [
+      "svcloudsync",
+      "auth.svcloudsync",
+      "auth.svcloudsync.google"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
