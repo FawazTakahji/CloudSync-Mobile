@@ -27,6 +27,7 @@
         <data android:scheme="svcloudsync"/>
         <data android:scheme="auth.svcloudsync"/>
         <data android:scheme="app.FawazT.CloudSync"/>
+        <data android:scheme="auth.svcloudsync.google"/>
       </intent-filter>
     </activity>
   </application>

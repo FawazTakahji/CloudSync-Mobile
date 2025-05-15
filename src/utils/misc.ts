@@ -100,6 +100,8 @@ export function getProviderName(provider: CloudProvider): string {
     switch (provider) {
         case CloudProvider.Dropbox:
             return "Dropbox";
+        case CloudProvider.GoogleDrive:
+            return "Google Drive";
     }
 }
 
@@ -107,6 +109,8 @@ export function getProviderIcon(provider: CloudProvider): string {
     switch (provider) {
         case CloudProvider.Dropbox:
             return "dropbox";
+        case CloudProvider.GoogleDrive:
+            return "google-drive";
     }
 }
 
@@ -114,6 +118,9 @@ export function goToProviderSettings(router: Router, provider: CloudProvider) {
     switch (provider) {
         case CloudProvider.Dropbox:
             router.push("/settings/cloud-provider/dropbox");
+            break;
+        case CloudProvider.GoogleDrive:
+            router.push("/settings/cloud-provider/google-drive");
             break;
     }
 }

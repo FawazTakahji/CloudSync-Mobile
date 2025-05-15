@@ -2,6 +2,7 @@ import React from "react";
 import DropboxSettingsProvider from "@/cloud-providers/dropbox/providers/DropboxSettingsProvider";
 import { ICloudClient } from "@/cloud-providers/ICloudClient";
 import CloudContext from "@/cloud-providers/CloudContext";
+import GoogleDriveSettingsProvider from "@/cloud-providers/google-drive/providers/GoogleDriveSettingsProvider";
 
 export function CloudContextProvider(props: { children: React.ReactNode }) {
     const [cloudClient, setCloudClient] = React.useState<ICloudClient>({
@@ -19,7 +20,9 @@ export function CloudContextProvider(props: { children: React.ReactNode }) {
             cloudClient: cloudClient,
             setCloudClient: setCloudClient }}>
             <DropboxSettingsProvider>
-                {props.children}
+                <GoogleDriveSettingsProvider>
+                    {props.children}
+                </GoogleDriveSettingsProvider>
             </DropboxSettingsProvider>
         </CloudContext.Provider>
     );
