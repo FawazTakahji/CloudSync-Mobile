@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Divider, List, Portal, Surface } from "react-native-paper";
-import { TextInput as RNTextInput } from "react-native";
+import { TextInput } from "react-native";
 import { TextInputWithRestore } from "@/components/TextInputWithRestore";
 import { ErrorDialog } from "@/components/ErrorDialog";
 import { SingletonsContext } from "@/providers/SingletonsProvider";
@@ -23,7 +23,7 @@ export function SettingsScreen() {
     const [isAuthenticating, setIsAuthenticating] = React.useState(false);
     const [authErrorDialogVisible, setAuthErrorDialogVisible] = React.useState(false);
 
-    const refreshTokenInputRef = React.useRef<RNTextInput>(null);
+    const refreshTokenInputRef = React.useRef<TextInput>(null);
 
     return (
         <Surface style={styles.container}>
