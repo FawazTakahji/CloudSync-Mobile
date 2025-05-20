@@ -61,7 +61,7 @@ export default function GoogleDriveSettingsProvider(props: { children: React.Rea
             if (clientId) {
                 setClientIdInternal(clientId);
             } else {
-                setClientId(process.env.EXPO_PUBLIC_DROPBOX_CLIENT_ID);
+                setClientId(process.env.EXPO_PUBLIC_GOOGLEDRIVE_CLIENT_ID);
             }
         } catch (e) {
             log.error("An error occurred while loading the client id:", e)
