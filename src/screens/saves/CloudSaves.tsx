@@ -50,6 +50,7 @@ export function CloudSaves(props: Props) {
     const [isLoadingSavesErrorVisible, setIsLoadingSavesErrorVisible] = React.useState<boolean>(false);
     const [confirmQueue, setConfirmQueue] = React.useState<Confirm[]>([]);
     const [failedDownloads, setFailedDownloads] = React.useState<string[]>([]);
+    const [failedDeletes, setFailedDeletes] = React.useState<string[]>([]);
 
     const { emit, listen, unlisten } = useEvents();
 
@@ -116,10 +117,15 @@ export function CloudSaves(props: Props) {
                              hide={() => setIsLoadingSavesErrorVisible(false)}>
                     {`An error occurred while loading the saves from ${getProviderName(cloudProvider)}, check the logs for more information.`}
                 </ErrorDialog>
-                <ErrorDialog title={"Downloads Failed"}
+                <ErrorDialog title={"Download Failed"}
                              visible={failedDownloads.length > 0}
-                             hide={() => setFailedDownloads([])}>
-                    {`Downloads failed for the following saves, check the logs for more information:\n${failedDownloads.join(", ")}`}
+                             hide={() => removeFailedDownload(failedDownloads[0])}>
+                    {`An error occurred while downloading \"${failedDownloads[0]}\", check the logs for more information.`}
+                </ErrorDialog>
+                <ErrorDialog title={"Delete Failed"}
+                             visible={failedDeletes.length > 0}
+                             hide={() => removeFailedDelete(failedDeletes[0])}>
+                    {`An error occurred while deleting \"${failedDeletes[0]}\", check the logs for more information.`}
                 </ErrorDialog>
 
                 {confirmQueue.length > 0 && (
@@ -179,14 +185,30 @@ export function CloudSaves(props: Props) {
                       highlightColor={itemProps.highlightColor}
                       title={itemProps.save.farmerName}
                       subtitle={`${itemProps.save.farmName} Farm`}
-                      icon={"download"}
-                      loading={singletons.isSaveDownloading(itemProps.save.folderName)}
-                      disabled={singletons.isSaveTransferring(itemProps.save.folderName)}
-                      onPress={async () => {
-                          singletons.setSaveDownloading(itemProps.save.folderName, true);
-                          await downloadSave(itemProps.save);
-                          singletons.setSaveDownloading(itemProps.save.folderName, false);
-                      }}
+                      buttons={[
+                          {
+                              key: "delete",
+                              icon: "delete",
+                              loading: singletons.isSaveDeleting(itemProps.save.folderName),
+                              disabled: singletons.isSaveTransferring(itemProps.save.folderName),
+                              onPress: async () => {
+                                  singletons.setSaveDeleting(itemProps.save.folderName, true);
+                                  await deleteSave(itemProps.save);
+                                  singletons.setSaveDeleting(itemProps.save.folderName, false);
+                              }
+                          },
+                          {
+                              key: "download",
+                              icon: "download",
+                              loading: singletons.isSaveDownloading(itemProps.save.folderName),
+                              disabled: singletons.isSaveTransferring(itemProps.save.folderName),
+                              onPress: async () => {
+                                  singletons.setSaveDownloading(itemProps.save.folderName, true);
+                                  await downloadSave(itemProps.save);
+                                  singletons.setSaveDownloading(itemProps.save.folderName, false);
+                              }
+                          }
+                      ]}
                       onLongPress={() => props.showSaveInfo(itemProps.save)} />
         );
     }
@@ -367,8 +389,30 @@ export function CloudSaves(props: Props) {
         }
     }
 
+    async function deleteSave(info: SaveInfo) {
+        try {
+            await cloudClient.deleteSave(info.folderName);
+            props.setSaves(prevState => !prevState ? null : prevState.filter(s => s.folderName !== info.folderName));
+        } catch (e) {
+            log.error(`An error occurred while deleting save \"${info.folderName}\":`, e);
+            addFailedDelete(info.folderName);
+        }
+    }
+
     function addFailedDownload(folderName: string) {
         setFailedDownloads(prevState => [...prevState, folderName]);
+    }
+
+    function removeFailedDownload(folderName: string) {
+        setFailedDownloads(prevState => prevState.filter(s => s !== folderName));
+    }
+
+    function addFailedDelete(folderName: string) {
+        setFailedDeletes(prevState => [...prevState, folderName]);
+    }
+
+    function removeFailedDelete(folderName: string) {
+        setFailedDeletes(prevState => prevState.filter(s => s !== folderName));
     }
 }
 

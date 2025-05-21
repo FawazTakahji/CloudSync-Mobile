@@ -1,17 +1,24 @@
 import { IconButton, List } from "react-native-paper";
 import React from "react";
 import { HighlightText } from "@/components/HighlightText";
+import { View } from "react-native";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 interface Props {
     title: string;
     subtitle: string;
-    icon: string;
-    loading: boolean;
-    disabled: boolean;
-    onPress: () => void;
+    buttons: ButtonProps[];
     onLongPress: () => void;
     searchText?: string;
     highlightColor?: string;
+}
+
+interface ButtonProps {
+    key: string;
+    icon: IconSource;
+    loading: boolean;
+    disabled: boolean;
+    onPress: () => void;
 }
 
 export function SaveItem(props: Props) {
@@ -32,11 +39,23 @@ export function SaveItem(props: Props) {
                            {props.subtitle}
                        </HighlightText> : props.subtitle}
                    right={rightProps =>
-                       <IconButton {...rightProps}
-                                   icon={props.icon}
-                                   loading={props.loading}
-                                   disabled={props.disabled}
-                                   onPress={props.onPress} />}
+                       <View style={{
+                           flexDirection: "row"
+                       }}>
+                           {props.buttons.map(button =>
+                               <IconButton {...rightProps}
+                                           key={button.key}
+                                           icon={button.icon}
+                                           loading={button.loading}
+                                           disabled={button.disabled}
+                                           onPress={button.onPress}
+                                           style={[rightProps.style, {
+                                               margin: 0,
+                                               marginLeft: 5
+                                           }]}
+                               />
+                               )}
+                       </View>}
                    onLongPress={props.onLongPress} />
     );
 }

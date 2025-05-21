@@ -163,10 +163,10 @@ export function LocalSaves(props: Props) {
                     An error occurred while loading the saves, check the logs for more information.
                 </ErrorDialog>
 
-                <ErrorDialog title={"Uploads Failed"}
+                <ErrorDialog title={"Upload Failed"}
                              visible={failedUploads.length > 0}
-                             hide={() => setFailedUploads([])}>
-                    {`Uploads failed for the following saves, check the logs for more information:\n${failedUploads.join(", ")}`}
+                             hide={() => removeFailedUpload(failedUploads[0])}>
+                    {`An error occurred while uploading \"${failedUploads[0]}\", check the logs for more information.`}
                 </ErrorDialog>
 
                 {confirmQueue.length > 0 && (
@@ -226,14 +226,19 @@ export function LocalSaves(props: Props) {
                       highlightColor={itemProps.highlightColor}
                       title={itemProps.save.farmerName}
                       subtitle={`${itemProps.save.farmName} Farm`}
-                      icon={"upload"}
-                      loading={singletons.isSaveUploading(itemProps.save.folderName)}
-                      disabled={!cloudClient.isSignedIn || singletons.isSaveTransferring(itemProps.save.folderName)}
-                      onPress={async () => {
-                          singletons.setSaveUploading(itemProps.save.folderName, true);
-                          await uploadSave(itemProps.save);
-                          singletons.setSaveUploading(itemProps.save.folderName, false);
-                      }}
+                      buttons={[
+                          {
+                              key: "upload",
+                              icon: "upload",
+                              loading: singletons.isSaveUploading(itemProps.save.folderName),
+                              disabled: !cloudClient.isSignedIn || singletons.isSaveTransferring(itemProps.save.folderName),
+                              onPress: async () => {
+                                  singletons.setSaveUploading(itemProps.save.folderName, true);
+                                  await uploadSave(itemProps.save);
+                                  singletons.setSaveUploading(itemProps.save.folderName, false);
+                              }
+                          }
+                      ]}
                       onLongPress={() => props.showSaveInfo(itemProps.save)} />
         );
     }
@@ -340,6 +345,10 @@ export function LocalSaves(props: Props) {
 
     function addFailedUpload(folderName: string) {
         setFailedUploads(prevState => [...prevState, folderName]);
+    }
+
+    function removeFailedUpload(folderName: string) {
+        setFailedUploads(prevState => prevState.filter(s => s !== folderName));
     }
 }
 
