@@ -11,7 +11,10 @@ export function CloudContextProvider(props: { children: React.ReactNode }) {
         deleteSave: () => { throw new Error("Not implemented"); },
         uploadSave: () => { throw new Error("Not implemented"); },
         downloadSave: () => { throw new Error("Not implemented"); },
+        getBackups: () => { throw new Error("Not implemented"); },
+        deleteBackup: () => { throw new Error("Not implemented"); },
         backupSave: () => { throw new Error("Not implemented"); },
+        downloadBackup: () => { throw new Error("Not implemented"); },
         purgeBackups: () => { throw new Error("Not implemented"); }
     });
 
