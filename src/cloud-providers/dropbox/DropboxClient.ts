@@ -1,4 +1,4 @@
-import { ICloudClient } from "@/cloud-providers/ICloudClient";
+import { BackupInfo, ICloudClient } from "@/cloud-providers/ICloudClient";
 import { Dropbox, DropboxResponseError, files } from "dropbox";
 import { isFolder, isNotFoundError } from "@/cloud-providers/dropbox/utils";
 import { DateTime } from "luxon";
@@ -17,7 +17,7 @@ import JSZip from "jszip";
 import { AttemptContext, PartialAttemptOptions, retry } from "@lifeomic/attempt";
 import pLimit from "p-limit";
 
-const backupRegex = /^.+_\d+_\[\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4}]$/;
+const backupRegex = /^(.+_\d+)_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4})]$/;
 const dateRegex = /_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4})]$/;
 const dateTimeFormat = "yyyy-MM-dd'T'HH.mm.ssZZZ";
 
@@ -169,6 +169,51 @@ export class DropboxClient implements ICloudClient {
         }
     }
 
+    async getBackups(): Promise<BackupInfo[]> {
+        let entries;
+        try {
+            entries = await this.filesListFolderAll({
+                path: "/Backups",
+                include_deleted: false,
+                include_non_downloadable_files: false
+            });
+        } catch (e) {
+            if (e instanceof DropboxResponseError && isNotFoundError(e.error)) {
+                return [];
+            }
+
+            throw e;
+        }
+
+        const backups: BackupInfo[] = [];
+        for (const entry of entries) {
+            if (!isFolder(entry)) {
+                continue;
+            }
+            const match = entry.name.match(backupRegex);
+            if (!match) {
+                continue;
+            }
+
+            const date = DateTime.fromFormat(match[2], dateTimeFormat);
+            backups.push({
+                folderName: match[1],
+                cloudFolderName: entry.name,
+                date
+            });
+        }
+
+        return backups;
+    }
+
+    async deleteBackup(folderName: string) {
+        await retry(() =>
+            this.rateLimit(() =>
+                this.client.filesDeleteV2({
+                    path: `/Backups/${folderName}`
+                })), this.retryGeneralAttemptOptions);
+    }
+
     async backupSave(saveName: string) {
         try {
             await retry(() =>
@@ -183,6 +228,23 @@ export class DropboxClient implements ICloudClient {
             }
 
             throw e;
+        }
+    }
+
+    async downloadBackup(storageMode: StorageMode, folderName: string, path: string) {
+        let zip = await this.getCloudZip(`/Backups/${folderName}`);
+
+        const files = getZipFiles(zip);
+        for (let file of files) {
+            const content = await zip.files[file].async("uint8array");
+            if (startsWithCaseInsensitive(file, `${folderName}/`)) {
+                file = file.substring(folderName.length + 1);
+            }
+
+            const filePath = Paths.join(path, file);
+            const parentPath = Paths.dirname(filePath);
+            const name = Paths.basename(filePath);
+            storage.writeFile(parentPath, name, content, storageMode);
         }
     }
 

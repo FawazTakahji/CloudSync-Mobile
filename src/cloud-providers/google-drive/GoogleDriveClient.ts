@@ -1,6 +1,6 @@
 ﻿import { StorageMode } from "@/enums";
 import { getSaveInfo, getSavesPath, isExcludedName, isSaveInfo, SaveInfo } from "@/utils/saves";
-import { ICloudClient } from "../ICloudClient";
+import { BackupInfo, ICloudClient } from "../ICloudClient";
 import { DateTime } from "luxon";
 import { FetchResponseError, GDrive, MIME_TYPES } from "@robinbobin/react-native-google-drive-api-wrapper";
 import { AttemptContext, PartialAttemptOptions, retry } from "@lifeomic/attempt";
@@ -404,6 +404,74 @@ export class GoogleDriveClient implements ICloudClient {
         await this.downloadDirectory(storageMode, drive, allFiles, saveFolder.id, path);
     }
 
+    async getBackups(): Promise<BackupInfo[]> {
+        const drive = await this.getDrive();
+        const { backupsId } = await this.getFolders(drive);
+
+        const allFiles = await this.listAllFiles(drive,
+            `mimeType='${MIME_TYPES.application.vndGoogleAppsFolder}' and '${backupsId}' in parents and trashed = false`,
+            "name, description");
+        const backups: BackupInfo[] = [];
+        for (const file of allFiles) {
+            const match = file.name.match(backupRegex);
+            if (!match)
+            {
+                log.warn(`Failed to parse backup name \"${file.name}\".`);
+                continue;
+            }
+            if (!file.description) {
+                log.warn(`Backup folder \"${file.name}\" is missing a description.`);
+                continue;
+            }
+
+            const date = DateTime.fromFormat(file.description, dateTimeFormat);
+            backups.push({
+                folderName: match[1],
+                cloudFolderName: file.name,
+                date
+            });
+        }
+
+        return backups;
+    }
+
+    async deleteBackup(folderName: string) {
+        const drive = await this.getDrive();
+        const { backupsId } = await this.getFolders(drive);
+
+        const allFiles = await this.listAllFiles(drive,
+            `name='${folderName}' and mimeType='${MIME_TYPES.application.vndGoogleAppsFolder}' and '${backupsId}' in parents and trashed = false`);
+
+        if (allFiles.length < 1) {
+            throw new Error(`Couldn't find the backup \"${folderName}\".`);
+        }
+
+        let failed = false;
+        const promises = [];
+        for (const file of allFiles) {
+            promises.push(async () => {
+                if (failed) {
+                    return;
+                }
+
+                try {
+                    await retry(() =>
+                        this.rateLimit(() =>
+                            drive.files.delete(file.id)), this.retryGeneralAttemptOptions);
+                }  catch (e) {
+                    failed = true;
+                    throw e;
+                }
+            });
+        }
+
+        const results = await Promise.allSettled(promises.map(promise => promise()));
+        const errors = results.filter(result => result.status === 'rejected').map(result => result.reason);
+        if (errors.length > 0) {
+            throw errors.length > 1 ? new AggregateError(errors, `Failed to delete backup: ${errors.toString()}`) : errors[0];
+        }
+    }
+
     async backupSave(saveName: string) {
         const drive = await this.getDrive()
         const { savesId, backupsId } = await this.getFolders(drive);
@@ -478,6 +546,25 @@ export class GoogleDriveClient implements ICloudClient {
         if (errors.length > 0) {
             throw errors.length > 1 ? new AggregateError(errors, `Failed to copy files: ${errors.toString()}`) : errors[0];
         }
+    }
+
+    async downloadBackup(storageMode: StorageMode, folderName: string, path: string) {
+        const drive = await this.getDrive();
+        const { backupsId } = await this.getFolders(drive);
+
+        const allFiles = await this.listAllFiles(drive,
+            "trashed = false",
+            "id, name, mimeType, parents");
+
+        const backupFolder = allFiles.find(file => equalsCaseInsensitive(file.name, folderName)
+            && file.mimeType === MIME_TYPES.application.vndGoogleAppsFolder
+            && file.parents?.includes(backupsId));
+
+        if (!backupFolder) {
+            throw new Error(`Failed to find the folder for backup \"${folderName}\".`);
+        }
+
+        await this.downloadDirectory(storageMode, drive, allFiles, backupFolder.id, path);
     }
 
     async purgeBackups(backupsToKeep: number) {
