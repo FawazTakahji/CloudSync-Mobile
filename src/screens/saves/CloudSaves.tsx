@@ -45,7 +45,13 @@ export function CloudSaves(props: Props) {
     const { cloudClient } = React.useContext(CloudContext);
 
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
-    const filteredSaves = props.searchText && props.saves ? filterSaves(props.saves, props.searchText) : null;
+    const filteredSaves = React.useMemo<SaveInfo[] | null>(() => {
+        if (!props.saves || !props.searchText) {
+            return null;
+        }
+
+        return filterSaves(props.saves, props.searchText);
+    }, [props.saves, props.searchText]);
 
     const [isLoadingSavesErrorVisible, setIsLoadingSavesErrorVisible] = React.useState<boolean>(false);
     const [confirmQueue, setConfirmQueue] = React.useState<Confirm[]>([]);
@@ -74,7 +80,10 @@ export function CloudSaves(props: Props) {
 
     return (
         <>
-            <Header />
+            <StorageHeader icon={"cloud"}
+                           text={"Cloud Saves"}
+                           isLoading={isLoading}
+                           onPress={refresh} />
 
             {isLoading ? (
                 <View style={styles.MessageContainer}>
@@ -143,17 +152,6 @@ export function CloudSaves(props: Props) {
             </Portal>
         </>
     );
-
-    function Header() {
-        const singletons = React.useContext(SingletonsContext);
-        return (
-            <StorageHeader icon={"cloud"}
-                           text={"Cloud Saves"}
-                           isLoading={isLoading}
-                           isDisabled={singletons.isDownloadingSaves}
-                           onPress={refresh} />
-        );
-    }
 
     function List() {
         if (filteredSaves) {
@@ -295,7 +293,7 @@ export function CloudSaves(props: Props) {
 
             return true;
         } else if (storageMode === StorageMode.Saf && !saf.isStoragePermissionGranted()) {
-            ToastAndroid.show("Please grant the storage permission", ToastAndroid.SHORT);
+            ToastAndroid.show("Please grant access to Android/data", ToastAndroid.SHORT);
             return await saf.requestStoragePermission();
         }
 

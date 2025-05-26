@@ -1,4 +1,5 @@
 ﻿export default {
     cloudSavesChanged: "CloudSavesChanged",
-    localSavesChanged: "LocalSavesChanged"
+    localSavesChanged: "LocalSavesChanged",
+    backupsChanged: "BackupsChanged"
 }

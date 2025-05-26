@@ -12,7 +12,7 @@ import log from "@/utils/logger";
 
 export function SettingsScreen() {
     const settings = React.useContext(DropboxContext);
-    const { isTransferringSaves } = React.useContext(SingletonsContext);
+    const { isTransferringSaves, isTransferringBackups } = React.useContext(SingletonsContext);
     const [clientId, setClientId] = React.useState<string>(settings.clientId);
     const [refreshToken, setRefreshToken] = React.useState<string>(settings.refreshToken);
 
@@ -96,7 +96,7 @@ export function SettingsScreen() {
                             style={{marginRight: 10}}>
                         Restore
                     </Button>
-                    <Button disabled={isTransferringSaves || !canSaveRestore}
+                    <Button disabled={isTransferringSaves || isTransferringBackups || !canSaveRestore}
                             onPress={save}>
                         Save
                     </Button>

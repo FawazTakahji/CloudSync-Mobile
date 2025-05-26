@@ -3,6 +3,7 @@ import React from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BottomBar } from "@/components/navigation/BottomBar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function TabsLayout() {
     return (
@@ -13,6 +14,11 @@ export default function TabsLayout() {
                          options={{
                              title: "Saves",
                              tabBarIcon: ({ color, size }) => <MaterialIcons name={"save"} size={size} color={color}/>
+                         }}/>
+            <Tabs.Screen name="backups"
+                         options={{
+                             title: "Backups",
+                             tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name={"archive"} size={size} color={color}/>
                          }}/>
             <Tabs.Screen name="settings"
                          options={{
