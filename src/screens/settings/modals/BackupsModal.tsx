@@ -1,27 +1,21 @@
 import { SettingsModal } from "@/screens/settings/modals/SettingsModal";
-import { Button, Divider, IconButton, List, Text, useTheme } from "react-native-paper";
+import { Divider, IconButton, List, Text, useTheme } from "react-native-paper";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
-import { ToastAndroid, View } from "react-native";
-import CloudContext from "@/cloud-providers/CloudContext";
-import log from "@/utils/logger";
+import { View } from "react-native";
 
 interface Props {
     setVisible: (visible: boolean) => void;
     backupSaves: boolean;
     purgeBackups: boolean;
     backupsToKeep: number;
-    isPurgingBackups: boolean;
     setBackupSaves: (backupSaves: boolean) => void;
     setPurgeBackups: (purgeBackups: boolean) => void;
     setBackupsToKeep: (backupsToKeep: number) => void;
-    setIsPurgingBackupsErrorVisible: (visible: boolean) => void;
-    setIsPurgingBackups: (isPurgingBackups: boolean) => void;
 }
 
 export function BackupsModal(props: Props) {
     const { colors } = useTheme();
-    const { cloudClient } = React.useContext(CloudContext);
 
     return (
         <SettingsModal header={"Backups"}
@@ -49,7 +43,7 @@ export function BackupsModal(props: Props) {
 
             <View style={{
                 alignSelf: "stretch",
-                paddingVertical: 8,
+                paddingTop: 8,
                 paddingHorizontal: 24
             }}>
                 <Text style={{
@@ -94,29 +88,6 @@ export function BackupsModal(props: Props) {
                                 }} />
                 </View>
             </View>
-            <Divider />
-
-            <Button mode={"contained"}
-                    loading={props.isPurgingBackups}
-                    disabled={props.isPurgingBackups || !cloudClient.isSignedIn}
-                    icon={"delete"}
-                    onPress={purgeBackups}
-                    style={{marginTop: 8}}>
-                Manually Purge Backups
-            </Button>
         </SettingsModal>
     );
-
-    async function purgeBackups() {
-        try {
-            props.setIsPurgingBackups(true);
-            await cloudClient.purgeBackups(props.backupsToKeep);
-            ToastAndroid.show("Backups deleted", ToastAndroid.SHORT);
-        } catch (e) {
-            log.error("An error occurred while deleting old backups:", e);
-            props.setIsPurgingBackupsErrorVisible(true);
-        } finally {
-            props.setIsPurgingBackups(false);
-        }
-    }
 }

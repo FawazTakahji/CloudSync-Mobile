@@ -27,7 +27,7 @@ import { SavesPathModal } from "@/screens/settings/modals/SavesPathModal";
 export default function SettingsScreen() {
     const router = useRouter();
     const settings = React.useContext(SettingsContext);
-    const { isTransferringSaves } = React.useContext(SingletonsContext);
+    const { isTransferringSaves, isTransferringBackups } = React.useContext(SingletonsContext);
     const [isThemeModalVisible, setIsThemeModalVisible] = React.useState<boolean>(false);
     const [isStorageModeModalVisible, setIsStorageModeModalVisible] = React.useState<boolean>(false);
     const [isSavesPathModalVisible, setIsSavesPathModalVisible] = React.useState<boolean>(false);
@@ -42,11 +42,9 @@ export default function SettingsScreen() {
     const [isBackupSavesErrorVisible, setIsBackupSavesErrorVisible] = React.useState<boolean>(false);
     const [isPurgeBackupsErrorVisible, setIsPurgeBackupsErrorVisible] = React.useState<boolean>(false);
     const [isBackupsToKeepErrorVisible, setIsBackupsToKeepErrorVisible] = React.useState<boolean>(false);
-    const [isPurgingBackupsErrorVisible, setIsPurgingBackupsErrorVisible] = React.useState<boolean>(false);
     const [isExportErrorDialogVisible, setIsExportErrorDialogVisible] = React.useState<boolean>(false);
     const [exportError, setExportError] = React.useState<string | null>(null);
 
-    const [isPurgingBackups, setIsPurgingBackups] = React.useState<boolean>(false);
     const [isCheckingUpdates, setIsCheckingUpdates] = React.useState<boolean>(false);
 
     return (
@@ -68,7 +66,7 @@ export default function SettingsScreen() {
                            <Text {...props}>
                                {getStorageModeName(settings.storageMode)}
                            </Text>}
-                       disabled={isTransferringSaves}
+                       disabled={isTransferringSaves || isTransferringBackups}
                        onPress={() => setIsStorageModeModalVisible(true)} />
             <Divider />
 
@@ -77,7 +75,7 @@ export default function SettingsScreen() {
                            <Text {...props}>{settings.savesPath.path ?? "Default"}</Text>}
                        left={props =>
                            <List.Icon {...props} icon="folder" />}
-                       disabled={isTransferringSaves}
+                       disabled={isTransferringSaves || isTransferringBackups}
                        onPress={() => setIsSavesPathModalVisible(true)} />
             <Divider />
 
@@ -90,7 +88,7 @@ export default function SettingsScreen() {
                            <IconButton {...props}
                                        icon={"cog"}
                                        onPress={() => goToProviderSettings(router, settings.cloudProvider)} />}
-                       disabled={isTransferringSaves}
+                       disabled={isTransferringSaves || isTransferringBackups}
                        onPress={() => setIsCloudProviderModalVisible(true)} />
             <Divider />
 
@@ -132,12 +130,9 @@ export default function SettingsScreen() {
                                                         backupSaves={settings.backupSaves}
                                                         purgeBackups={settings.purgeBackups}
                                                         backupsToKeep={settings.backupsToKeep}
-                                                        isPurgingBackups={isPurgingBackups}
                                                         setBackupSaves={setBackupSaves}
                                                         setPurgeBackups={setPurgeBackups}
-                                                        setBackupsToKeep={setBackupsToKeep}
-                                                        setIsPurgingBackupsErrorVisible={setIsPurgingBackupsErrorVisible}
-                                                        setIsPurgingBackups={setIsPurgingBackups} />}
+                                                        setBackupsToKeep={setBackupsToKeep} />}
                 {isUpdatesModalVisible && <UpdatesModal setVisible={setIsUpdatesModalVisible}
                                                         checkUpdates={settings.checkUpdates}
                                                         isCheckingUpdates={isCheckingUpdates}
@@ -178,11 +173,6 @@ export default function SettingsScreen() {
                              visible={isBackupsToKeepErrorVisible}
                              hide={() => setIsBackupsToKeepErrorVisible(false)}>
                     An error occurred while saving the backups to keep setting, check the logs for more information.
-                </ErrorDialog>
-                <ErrorDialog title={"Purge Backups Error"}
-                             visible={isPurgingBackupsErrorVisible}
-                             hide={() => setIsPurgingBackupsErrorVisible(false)}>
-                    An error occurred while deleting old backups, check the logs for more information.
                 </ErrorDialog>
                 <ExportErrorDialog visible={isExportErrorDialogVisible}
                                    hide={hideExportErrorDialog}

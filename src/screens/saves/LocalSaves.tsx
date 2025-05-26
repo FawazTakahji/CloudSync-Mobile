@@ -51,7 +51,13 @@ export function LocalSaves(props: Props) {
     const [confirmQueue, setConfirmQueue] = React.useState<Confirm[]>([]);
     const [failedUploads, setFailedUploads] = React.useState<string[]>([]);
 
-    const filteredSaves = props.searchText && props.saves ? filterSaves(props.saves, props.searchText) : null;
+    const filteredSaves = React.useMemo<SaveInfo[] | null>(() => {
+        if (!props.saves || !props.searchText) {
+            return null;
+        }
+
+        return filterSaves(props.saves, props.searchText);
+    }, [props.saves, props.searchText]);
 
     const { emit, listen, unlisten } = useEvents();
 
@@ -75,7 +81,10 @@ export function LocalSaves(props: Props) {
 
     return (
         <>
-            <Header />
+            <StorageHeader icon={"sd"}
+                           text={"Local Saves"}
+                           isLoading={isLoading}
+                           onPress={refresh} />
 
             {isLoading ? (
                 <View style={styles.MessageContainer}>
@@ -184,17 +193,6 @@ export function LocalSaves(props: Props) {
             </Portal>
         </>
     );
-
-    function Header() {
-        const singletons = React.useContext(SingletonsContext);
-        return (
-            <StorageHeader icon={"sd"}
-                           text={"Local Saves"}
-                           isLoading={isLoading}
-                           isDisabled={singletons.isUploadingSaves}
-                           onPress={refresh} />
-        );
-    }
 
     function List() {
         if (filteredSaves) {
@@ -318,6 +316,7 @@ export function LocalSaves(props: Props) {
         if (backupSaves) {
             try {
                 await cloudClient.backupSave(info.folderName);
+                emit(events.backupsChanged, undefined);
             } catch (e) {
                 log.error(`An error occurred while backing up save \"${info.folderName}\":`, e);
                 addFailedUpload(info.folderName);

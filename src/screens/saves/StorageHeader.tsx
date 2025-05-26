@@ -6,7 +6,6 @@ interface Props {
     icon: string;
     text: string;
     isLoading: boolean;
-    isDisabled: boolean;
     onPress: () => void;
 }
 
@@ -25,7 +24,6 @@ export function StorageHeader(props: Props) {
                 <View style={styles.button}>
                     <Tooltip title={"Refresh"}>
                         <IconButton icon={"refresh"}
-                                    disabled={props.isDisabled}
                                     onPress={props.onPress} />
                     </Tooltip>
                 </View>
