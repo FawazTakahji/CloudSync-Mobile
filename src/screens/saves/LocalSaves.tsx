@@ -1,7 +1,7 @@
 import React from "react";
-import { Linking, StyleSheet, ToastAndroid, View } from "react-native";
+import { FlatList, Linking, StyleSheet, ToastAndroid, View } from "react-native";
 import { StorageHeader } from "@/screens/saves/StorageHeader";
-import { ActivityIndicator, Button, Portal, Text } from "react-native-paper";
+import { ActivityIndicator, Button, Divider, Portal, Text } from "react-native-paper";
 import { requestStoragePermission } from "@/utils/storage";
 import * as legacy from "@/utils/storage/legacy";
 import * as saf from "@/utils/storage/saf";
@@ -12,7 +12,6 @@ import { getLocalSaves, SaveInfo } from "@/utils/saves";
 import { SingletonsContext } from "@/providers/SingletonsProvider";
 import { ErrorDialog } from "@/components/ErrorDialog";
 import { SaveItem } from "@/screens/saves/components/SaveItem";
-import { SavesList } from "@/screens/saves/components/SavesList";
 import { SettingsContext } from "@/providers/SettingsProvider";
 import { filterSaves } from "@/utils/misc";
 import CloudContext from "@/cloud-providers/CloudContext";
@@ -51,12 +50,12 @@ export function LocalSaves(props: Props) {
     const [confirmQueue, setConfirmQueue] = React.useState<Confirm[]>([]);
     const [failedUploads, setFailedUploads] = React.useState<string[]>([]);
 
-    const filteredSaves = React.useMemo<SaveInfo[] | null>(() => {
-        if (!props.saves || !props.searchText) {
-            return null;
+    const data = React.useMemo<SaveInfo[] | null>(() => {
+        if (props.searchText && props.saves !== null) {
+            return filterSaves(props.saves, props.searchText);
+        } else {
+            return props.saves;
         }
-
-        return filterSaves(props.saves, props.searchText);
     }, [props.saves, props.searchText]);
 
     const { emit, listen, unlisten } = useEvents();
@@ -143,8 +142,24 @@ export function LocalSaves(props: Props) {
                         Grant
                     </Button>
                 </View>
-            ) : filteredSaves || props.saves ? (
-                <List />
+            ) : data ? (
+                <FlatList data={data}
+                          onRefresh={refresh}
+                          refreshing={isLoading}
+                          keyExtractor={item => item.folderName}
+                          renderItem={item =>
+                              <Item save={item.item}
+                                    searchText={props.searchText}
+                                    highlightColor={props.searchTextHighlightColor} />}
+                          ItemSeparatorComponent={() => <Divider />}
+                          ListEmptyComponent={
+                              <Text variant={"bodyLarge"}>
+                                  {props.searchText ?
+                                      `No saves found matching "${props.searchText}"`
+                                      : "No saves found"}
+                              </Text>
+                          }
+                          contentContainerStyle={data.length ? undefined : styles.MessageContainer} />
             ) : (
                 <View style={styles.MessageContainer}>
                     <Button onPress={refresh}>
@@ -194,29 +209,6 @@ export function LocalSaves(props: Props) {
         </>
     );
 
-    function List() {
-        if (filteredSaves) {
-            return (
-                <SavesList data={filteredSaves}
-                           listEmptyText={`No saves found matching "${props.searchText}"`}
-                           renderItem={item =>
-                               <Item save={item.item}
-                                     searchText={props.searchText}
-                                     highlightColor={props.searchTextHighlightColor} />}
-                           onRefresh={refresh}
-                           refreshing={isLoading} />
-            );
-        } else {
-            return (
-                <SavesList data={props.saves!}
-                           listEmptyText={"No saves found"}
-                           renderItem={item => <Item save={item.item} />}
-                           onRefresh={refresh}
-                           refreshing={isLoading} />
-            );
-        }
-    }
-
     function Item(itemProps: ItemProps) {
         const singletons = React.useContext(SingletonsContext);
         return (
@@ -247,6 +239,9 @@ export function LocalSaves(props: Props) {
         setShizukuAvailable(true);
         setStoragePerm(true);
         props.setSaves(null);
+
+        // show activity indicator for a moment
+        await new Promise(resolve => setTimeout(resolve, 1));
 
         let shouldLoadSaves: boolean = false;
         if (!savesPath.inAndroidFolder || storageMode === StorageMode.Legacy) {
