@@ -148,6 +148,13 @@ export default function BackupsScreen() {
 
                 <SectionList sections={sections}
                              keyExtractor={item => item.cloudFolderName}
+                             ListEmptyComponent={
+                                 <Text variant={"bodyLarge"}>
+                                     {searchText ?
+                                         `No backups found matching "${searchText}"`
+                                         : "No backups found"}
+                                 </Text>
+                             }
                              renderItem={({ item }) => <Item {...item} />}
                              renderSectionHeader={({ section: { title } }) =>
                              <Surface elevation={5}
@@ -165,7 +172,8 @@ export default function BackupsScreen() {
                              </Surface>}
                              ItemSeparatorComponent={() => <Divider />}
                              refreshing={isLoading}
-                             onRefresh={refresh} />
+                             onRefresh={refresh}
+                             contentContainerStyle={sections.length ? undefined : styles.MessageContainer} />
 
                 <View style={[styles.bottomContainer, {
                     backgroundColor: colors.background
