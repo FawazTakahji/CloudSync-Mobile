@@ -19,34 +19,37 @@ You should always use the legacy mode if its available, its the fastest and most
 
 ## Todo
 - Add support for other cloud storage services
-- Add the ability to delete saves on the cloud from the cloud saves menu
-- Add a screen to manage backups
 
 ## Screenshots
 <details>
   <summary>Saves Screen</summary>
 
-  ![Saves Screen](assets/screenshots/Saves.png)
+  <img src="assets/screenshots/Saves.png" alt="Saves Screen" width="200"/>
 </details>
 <details>
-  <summary>Search</summary>
+  <summary>Backups Screen</summary>
 
-  ![Search](assets/screenshots/Search.png)
-</details>
-<details>
-  <summary>Save Info</summary>
-
-  ![Save Info](assets/screenshots/SaveInfo.png)
+  <img src="assets/screenshots/Backups.png" alt="Backups Screen" width="200"/>
 </details>
 <details>
   <summary>Settings Screen</summary>
 
-  ![Settings Screen](assets/screenshots/Settings.png)
+  <img src="assets/screenshots/Settings.png" alt="Settings Screen" width="200"/>
+</details>
+<details>
+  <summary>Search</summary>
+
+  <img src="assets/screenshots/Search.png" alt="Search" width="200"/>
+</details>
+<details>
+  <summary>Save Info</summary>
+
+  <img src="assets/screenshots/SaveInfo.png" alt="Save Info" width="200"/>
 </details>
 <details>
   <summary>Cloud Settings</summary>
 
-  ![Cloud Settings](assets/screenshots/CloudSettings.png)
+  <img src="assets/screenshots/CloudSettings.png" alt="Cloud Settings" width="200"/>
 </details>
 
 ## Building
