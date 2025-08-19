@@ -348,7 +348,8 @@ export class GoogleDriveClient implements ICloudClient {
             "id");
 
         if (files.length < 1) {
-            throw new Error(`Couldn't find the save \"${saveName}\".`);
+            log.warn(`Couldn't find the save \"${saveName}\".`);
+            return;
         }
 
         let failed: boolean = false;
@@ -485,7 +486,8 @@ export class GoogleDriveClient implements ICloudClient {
             && file.parents?.includes(savesId));
 
         if (!saveFolder) {
-            throw new Error(`Failed to find the folder for save \"${saveName}\".`);
+            log.warn(`Failed to find the folder for save \"${saveName}\".`);
+            return;
         }
 
         const dateTime = DateTime.now().toFormat(dateTimeFormat);
