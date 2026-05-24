@@ -29,7 +29,7 @@ interface Folders {
 }
 
 const dateTimeFormat = "yyyy-MM-dd'T'HH.mm.ssZZZ";
-const backupRegex = /^(.+_\d+)_\[\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4}]$/;
+const backupRegex = /^(.+_\d+)_\[\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}[+-]\d{4}]$/;
 
 export class GoogleDriveClient implements ICloudClient {
     private readonly retryGeneralAttemptOptions: PartialAttemptOptions<any> = {
