@@ -17,8 +17,8 @@ import JSZip from "jszip";
 import { AttemptContext, PartialAttemptOptions, retry } from "@lifeomic/attempt";
 import pLimit from "p-limit";
 
-const backupRegex = /^(.+_\d+)_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4})]$/;
-const dateRegex = /_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\+\d{4})]$/;
+const backupRegex = /^(.+_\d+)_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}[+-]\d{4})]$/;
+const dateRegex = /_\[(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}[+-]\d{4})]$/;
 const dateTimeFormat = "yyyy-MM-dd'T'HH.mm.ssZZZ";
 
 export class DropboxClient implements ICloudClient {
